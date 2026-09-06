@@ -59,6 +59,9 @@
   (function(){
     var KEY = 'snSessionBackup';
     function fromApp(origin){ return /^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(origin) || origin === 'https://script.google.com'; }
+    /* 送り主が「この包みの中の画面」か（別のタブや別サイトから同じ種類のアドレスで話しかけられても答えない）。
+       中の画面は「包み → script.google.com → googleusercontent」の入れ子なので、その最上位（top）はこの包み自身になる */
+    function insideMe(src){ try { return !!src && src !== window && src.top === window; } catch(e){ return false; } }
     var appWin = null, appOrigin = '';
     function reply(msg){ try { if(appWin) appWin.postMessage(msg, appOrigin); } catch(e){} }
 
@@ -116,7 +119,7 @@
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') clearBadge(); });
 
     window.addEventListener('message', function(ev){
-      if(!fromApp(ev.origin)) return;
+      if(!fromApp(ev.origin) || !insideMe(ev.source)) return;
       var d = ev.data || {};
       appWin = ev.source; appOrigin = ev.origin;
       if (pendingTab) { var pt = pendingTab; pendingTab = ''; setTimeout(function(){ reply({ type:'sn-open-tab', tab:pt }); }, 300); }
