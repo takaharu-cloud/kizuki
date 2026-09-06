@@ -27,8 +27,11 @@ self.addEventListener('notificationclick', function(e){
   e.notification.close();
   e.waitUntil((async function(){
     try { if (self.navigator.clearAppBadge) await self.navigator.clearAppBadge(); } catch(err){}
+    var url = (e.notification.data && e.notification.data.url) || './';
     var all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (var i = 0; i < all.length; i++) { if ('focus' in all[i]) { await all[i].focus(); return; } }
-    if (self.clients.openWindow) await self.clients.openWindow('./');
+    for (var i = 0; i < all.length; i++) {
+      if ('focus' in all[i]) { await all[i].focus(); try { all[i].postMessage({ type: 'sn-open-tab', url: url }); } catch (err) {} return; }   // 開いたままなら、その掲示板へ
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(url);
   })());
 });
