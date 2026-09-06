@@ -1,0 +1,17 @@
+{
+  "name": "マエダ Share Note",
+  "short_name": "Share Note",
+  "description": "マエダ電気工事の現場ノート（気づき・相談・つぶやき）",
+  "id": "/kizuki/",
+  "start_url": "/kizuki/",
+  "scope": "/kizuki/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFDF4",
+  "theme_color": "#FFD400",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "256x256", "type": "image/png", "purpose": "maskable" }
+  ]
+}
