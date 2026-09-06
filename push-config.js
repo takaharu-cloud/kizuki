@@ -4,11 +4,11 @@
    未設定（apiKey が空）のあいだは通知の機能はオフになり、アプリはこれまでどおり動く。 */
 window.SN_PUSH = {
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyBs-VcQmag0Mo74Lrk0wWtDrjnM2Vn5Dn4",
+    authDomain: "maeda-alert.firebaseapp.com",
+    projectId: "maeda-alert",
+    messagingSenderId: "1077728788153",
+    appId: "1:1077728788153:web:dedfee3b63d87135dca568"
   },
-  vapidKey: ""
+  vapidKey: "BGXw3IT_T6Z2nz1Qs8l6tIhAVtiN6K3NM8Eknc_jbw1VzAu1F23FhHsCelXdVR2QtOtzhqXanc5nL7R_lFhKj_c"
 };
