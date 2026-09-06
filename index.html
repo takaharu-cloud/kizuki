@@ -95,8 +95,8 @@
     }
     /* 通知をタップして開いたとき（#list / #help / #memo）：中の画面が話しかけてきたら、その掲示板を開くように伝える */
     var pendingTab = (location.hash || '').replace('#', '');
-    if (!/^(list|help|memo)$/.test(pendingTab)) pendingTab = '';
-    function tabFromUrl(u){ var m = String(u || '').match(/#(list|help|memo)\b/); return m ? m[1] : ''; }
+    if (!/^(list|help|memo|shelf(=[-\w]+)?)$/.test(pendingTab)) pendingTab = '';   // 通知（#list 等）と、棚の QR（#shelf=フォルダID）
+    function tabFromUrl(u){ var m = String(u || '').match(/#(list|help|memo|shelf(?:=[-\w]+)?)\b/); return m ? m[1] : ''; }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', function(ev){   // アプリを開いたまま通知をタップしたとき
         var d = ev.data || {};
