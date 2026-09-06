@@ -10,5 +10,5 @@ window.SN_PUSH = {
     messagingSenderId: "1077728788153",
     appId: "1:1077728788153:web:dedfee3b63d87135dca568"
   },
-  vapidKey: ""
+  vapidKey: "BGXw3IT_T6Z2nz1Qs8l6tIhAVtiN6K3NM8Eknc_jbw1VzAu1F23FhHsCelXdVR2QtOtzhqXanc5nL7R_lFhKj_c"
 };
