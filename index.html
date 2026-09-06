@@ -28,5 +28,22 @@
     allow="camera; clipboard-write"
     title="マエダ Share Note">
   </iframe>
+  <script>
+  /* ログインの「合い鍵」の控え。中の画面（Googleの側）の記憶がiPhoneに消されても、この包みの記憶から自動で復帰させる。
+     ・中の画面からの言葉だけ聞く（Googleのアプリ画面のアドレスから来たものだけ）
+     ・暗証番号は扱わない（合い鍵と名前だけ） */
+  (function(){
+    var KEY = 'snSessionBackup';
+    function fromApp(origin){ return /^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(origin) || origin === 'https://script.google.com'; }
+    window.addEventListener('message', function(ev){
+      if(!fromApp(ev.origin)) return;
+      var d = ev.data || {};
+      try{
+        if(d.type === 'sn-session-save'){ if(d.session && d.session.token){ localStorage.setItem(KEY, JSON.stringify(d.session)); } else { localStorage.removeItem(KEY); } }
+        if(d.type === 'sn-session-get'){ var s = null; try{ s = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){} ev.source.postMessage({ type:'sn-session', session:s }, ev.origin); }
+      }catch(e){}
+    });
+  })();
+  </script>
 </body>
 </html>
