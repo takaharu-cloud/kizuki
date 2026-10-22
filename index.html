@@ -3,136 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>マエダ Share Note</title>
+<title>マエダ Share Note（引っ越しました）</title>
 
-<!-- ホーム画面アイコン（ロゴ）。同じフォルダの icon.png を使う -->
+<!-- 2026-10-22 住所を https://maeda-denki.github.io/sharenote/ へ引っ越した。ここは案内だけ（アプリは開かない）。
+     通知係（sw.js）と push-config.js は残す：まだ移っていない人にも🔔が届き、タップするとこの案内が開く。
+     新しい住所で🔔をオンにすると、その人の古い宛先はサーバーが消す（2回鳴らない） -->
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-
-<!-- スマホでアプリのように全画面表示する設定 -->
 <meta name="theme-color" content="#FFD400">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="マエダ Share Note">
 
 <style>
-  html, body { margin:0; padding:0; height:100%; background:#FFFDF4; }
-  iframe { border:0; width:100%; height:100%; display:block; }
-  /* 「通知をオンにする」の確認（この包みの画面で押す必要があるため、ここに置く） */
-  #pushask { position:fixed; inset:0; z-index:99; background:rgba(26,22,11,.45); display:none; align-items:flex-end; justify-content:center; font-family:'Noto Sans JP',system-ui,sans-serif; }
-  #pushask.show { display:flex; }
-  #pushask .box { width:100%; max-width:560px; background:#fff; border-radius:12px 12px 0 0; padding:18px 18px 28px; box-shadow:0 -10px 30px -12px rgba(0,0,0,.4); }
-  #pushask h2 { margin:0 0 6px; font-size:17px; }
-  #pushask p { margin:0 0 14px; font-size:13px; color:#5A5344; line-height:1.6; }
-  #pushask .btns { display:flex; gap:10px; }
-  #pushask button { flex:1; min-height:48px; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; }
-  #pushask .go { border:none; background:#1A160B; color:#FFD400; }
-  #pushask .later { border:1px solid #E6DDB8; background:#fff; color:#5A5344; }
+  html, body { margin:0; padding:0; background:#FFFDF4; color:#1A160B; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif; line-height:1.6; }
+  main { max-width:520px; margin:0 auto; padding:32px 16px 40px; }
+  .mark { width:64px; height:64px; border-radius:14px; display:block; margin:0 0 16px; }
+  h1 { font-size:20px; margin:0 0 8px; }
+  p { margin:0 0 16px; font-size:15px; color:#5A5344; }
+  .go { display:block; text-align:center; text-decoration:none; background:#1A160B; color:#FFD400; font-weight:700; font-size:17px;
+        min-height:56px; line-height:56px; border-radius:10px; margin:8px 0 8px; }
+  .addr { text-align:center; font-size:14px; color:#5A5344; margin:0 0 24px; word-break:break-all; }
+  ol { margin:0; padding:16px 16px 16px 36px; background:#fff; border:1px solid #E6DDB8; border-radius:10px; font-size:15px; }
+  ol li { margin:0 0 8px; }
+  ol li:last-child { margin:0; }
+  .note { font-size:13px; margin-top:16px; }
 </style>
 </head>
 <body>
-  <!-- マエダ Share Note 本体（Google Apps Script）を全画面で表示します -->
-  <iframe
-    src="https://script.google.com/macros/s/AKfycbyEgMePg_LtoqIdOesqhrIEi5Mr01EwQ5DbYX_Qy5lW54rzLYDiI7s7jdSiBC3w1MmS/exec"
-    allow="camera; clipboard-write; fullscreen" allowfullscreen
-    title="マエダ Share Note">
-  </iframe>
-
-  <div id="pushask" role="dialog" aria-labelledby="pushask-title">
-    <div class="box">
-      <h2 id="pushask-title">通知をオンにしますか？</h2>
-      <p>新しい気づき・相談・つぶやきや、自分の投稿への返信が届いたときにお知らせします。アプリのアイコンにも数が出ます。</p>
-      <div class="btns"><button type="button" class="go" id="pushgo">通知をオンにする</button><button type="button" class="later" id="pushlater">あとで</button></div>
-    </div>
-  </div>
-
-  <script src="push-config.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" integrity="sha384-AQ3POAMqIhwS81FrUH95ekxqBZHeP5tG2JfEL3+7GuTtfRLWnrRh32UxwzM+//A9" crossorigin="anonymous"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js" integrity="sha384-XtSlZdmg0Ad5zf0AX4W9TGdm+dGjaNK4KG3lNFjfgbnxkCEuT9ugWXkLExgQTJ+6" crossorigin="anonymous"></script>
-  <script>
-  /* この包みの仕事は3つ：
-     1) ログインの「合い鍵」の控え（中の画面の記憶がiPhoneに消されても復帰させる）
-     2) 通知（プッシュ）：許可の確認・端末の宛先（トークン）の取得・アイコンの赤丸の消去
-     3) 中の画面（Googleの側）からの言葉だけ聞く。暗証番号は扱わない */
+<main>
+  <img class="mark" src="icon.png" alt="">
+  <h1>Share Note の住所が変わりました</h1>
+  <p>このアイコン（古い住所）は使えなくなりました。新しい住所から開いてください。</p>
+  <a class="go" id="go" href="https://maeda-denki.github.io/sharenote/">新しい住所で開く</a>
+  <div class="addr">maeda-denki.github.io/sharenote</div>
+  <ol>
+    <li>上のボタンで新しい住所を開く（iPhone は Safari で）</li>
+    <li>「ホーム画面に追加」で新しいアイコンを作る</li>
+    <li>新しいアイコンから開き、名前と暗証番号でログイン → 🔔をオン</li>
+    <li>この古いアイコンは消してかまいません</li>
+  </ol>
+  <p class="note">暗証番号を忘れたときは、アプリの管理者に聞いてください。</p>
+</main>
+<script>
+  /* 通知のタップ（#list など）や棚の QR（#shelf=…）で開かれたら、新しい住所の同じ場所へ */
   (function(){
-    var KEY = 'snSessionBackup';
-    function fromApp(origin){ return /^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(origin) || origin === 'https://script.google.com'; }
-    /* 送り主が「この包みの中の画面」か（別のタブや別サイトから同じ種類のアドレスで話しかけられても答えない）。
-       中の画面は「包み → script.google.com → googleusercontent」の入れ子なので、その最上位（top）はこの包み自身になる */
-    function insideMe(src){ try { return !!src && src !== window && src.top === window; } catch(e){ return false; } }
-    var appWin = null, appOrigin = '';
-    function reply(msg){ try { if(appWin) appWin.postMessage(msg, appOrigin); } catch(e){} }
-
-    /* ---- 通知の準備 ---- */
-    var cfg = (window.SN_PUSH && window.SN_PUSH.firebase) || {};
-    var configured = !!(cfg.apiKey && cfg.projectId && window.SN_PUSH.vapidKey);
-    var swReg = null, messaging = null;
-    function standalone(){ return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)); }
-    function supported(){ return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').then(function(r){ swReg = r; }).catch(function(){});
-    }
-    function getMessaging(){
-      if (messaging) return messaging;
-      if (!configured || !window.firebase || !firebase.messaging || !firebase.messaging.isSupported()) return null;
-      try { if (!firebase.apps.length) firebase.initializeApp(cfg); messaging = firebase.messaging(); } catch(e){ messaging = null; }
-      return messaging;
-    }
-    function currentToken(){   // 許可済みのときだけ、端末の宛先を取る（許可の確認は出さない）
-      var m = getMessaging();
-      if (!m || Notification.permission !== 'granted') return Promise.resolve('');
-      var ready = swReg ? Promise.resolve(swReg) : navigator.serviceWorker.ready;
-      return ready.then(function(r){ swReg = r; return m.getToken({ vapidKey: window.SN_PUSH.vapidKey, serviceWorkerRegistration: r }); }).catch(function(){ return ''; });
-    }
-    function sendStatus(){
-      var st = { type:'sn-push-status', configured: configured, supported: supported(), standalone: standalone(),
-                 ios: /iPhone|iPad|iPod/.test(navigator.userAgent), permission: ('Notification' in window) ? Notification.permission : 'unsupported', token:'' };
-      currentToken().then(function(t){ st.token = t || ''; reply(st); });
-    }
-    function clearBadge(){
-      try { if (navigator.clearAppBadge) navigator.clearAppBadge(); } catch(e){}
-      var ready = swReg ? Promise.resolve(swReg) : (('serviceWorker' in navigator) ? navigator.serviceWorker.ready : Promise.reject());
-      ready.then(function(r){ return r.getNotifications(); }).then(function(ns){ ns.forEach(function(n){ n.close(); }); }).catch(function(){});
-    }
-    /* 通知をタップして開いたとき（#list / #help / #memo）：中の画面が話しかけてきたら、その掲示板を開くように伝える */
-    var pendingTab = (location.hash || '').replace('#', '');
-    if (!/^(list|help|memo|shelf(=[-\w]+)?)$/.test(pendingTab)) pendingTab = '';   // 通知（#list 等）と、棚の QR（#shelf=フォルダID）
-    function tabFromUrl(u){ var m = String(u || '').match(/#(list|help|memo|shelf(?:=[-\w]+)?)\b/); return m ? m[1] : ''; }
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', function(ev){   // アプリを開いたまま通知をタップしたとき
-        var d = ev.data || {};
-        if (d.type === 'sn-open-tab') { var t = tabFromUrl(d.url); if (t) { if (appWin) reply({ type:'sn-open-tab', tab:t }); else pendingTab = t; } clearBadge(); }
-      });
-    }
-    var ask = document.getElementById('pushask');
-    document.getElementById('pushlater').addEventListener('click', function(){ ask.classList.remove('show'); reply({ type:'sn-push-later' }); });
-    document.getElementById('pushgo').addEventListener('click', function(){
-      ask.classList.remove('show');
-      if (!supported()) { sendStatus(); return; }
-      Notification.requestPermission().then(function(p){
-        if (p !== 'granted') { sendStatus(); return; }
-        return currentToken().then(function(t){ if (t) reply({ type:'sn-push-token', token: t }); sendStatus(); });
-      }).catch(function(){ sendStatus(); });
-    });
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') clearBadge(); });
-
-    window.addEventListener('message', function(ev){
-      if(!fromApp(ev.origin) || !insideMe(ev.source)) return;
-      var d = ev.data || {};
-      appWin = ev.source; appOrigin = ev.origin;
-      if (pendingTab) { var pt = pendingTab; pendingTab = ''; setTimeout(function(){ reply({ type:'sn-open-tab', tab:pt }); }, 300); }
-      try{
-        if(d.type === 'sn-session-save'){ if(d.session && d.session.token){ localStorage.setItem(KEY, JSON.stringify(d.session)); } else { localStorage.removeItem(KEY); } }
-        if(d.type === 'sn-session-get'){ var s = null; try{ s = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){} reply({ type:'sn-session', session:s }); }
-        if(d.type === 'sn-push-status'){ sendStatus(); }
-        if(d.type === 'sn-push-enable'){ if (supported() && Notification.permission === 'granted') { currentToken().then(function(t){ if (t) reply({ type:'sn-push-token', token:t }); sendStatus(); }); } else { ask.classList.add('show'); } }
-        if(d.type === 'sn-push-disable'){ var m = getMessaging(); (m ? m.deleteToken().catch(function(){}) : Promise.resolve()).then(sendStatus); }
-        if(d.type === 'sn-badge-clear'){ clearBadge(); }
-      }catch(e){}
-    });
+    var h = location.hash || '';
+    if (/^#(list|help|memo|shelf(=[-\w]+)?)$/.test(h)) document.getElementById('go').href += h;
   })();
-  </script>
+</script>
 </body>
 </html>

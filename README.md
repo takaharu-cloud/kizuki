@@ -1,6 +1,14 @@
-# kizuki — マエダ Share Note 配布ページ（通知の包み）
+# kizuki — マエダ Share Note 配布ページ（古い住所・引っ越しの案内）
 
-`https://takaharu-cloud.github.io/kizuki/` で配る PWA の包みです。中身の画面は Apps Script のウェブアプリ（`index.html` の iframe）で、この包みはホーム画面への追加とプッシュ通知（Service Worker）を受け持ちます。
+**2026-10-22 に住所を `https://maeda-denki.github.io/sharenote/` へ引っ越しました。** 包みの正本は `maeda-denki/sharenote` の `docs/` です（ここを直しても新しい住所には効きません）。
+
+- `index.html`＝「住所が変わりました」の案内だけ（アプリは開かない）。通知や棚の QR の `#list`・`#shelf=…` は、新しい住所の同じ場所へ渡す。
+- `sw.js`・`push-config.js`・`manifest.webmanifest` は残す：まだ移っていない人の端末にも🔔が届き、タップするとこの案内が開く。新しい住所で🔔をオンにすると、その人の古い宛先はサーバーが消す（2回鳴らない）。
+- みんなが移り終えたら（古い住所の宛先が0件になったら）、この箱の Pages を止めてよい。
+
+以下は引っ越し前の説明（通知係 `sw.js` と API キーの扱いは今も同じ）。
+
+`https://takaharu-cloud.github.io/kizuki/` で配る PWA の包みでした。中身の画面は Apps Script のウェブアプリ（`index.html` の iframe）で、この包みはホーム画面への追加とプッシュ通知（Service Worker）を受け持ちます。
 
 ## 通知をタップしたとき（`sw.js`・2026-09-23 追記）
 
